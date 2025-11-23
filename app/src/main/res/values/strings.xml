@@ -17,4 +17,33 @@
     <!-- Notifications -->
     <string name="notification_channel_reminders">Event Reminders</string>
     <string name="notification_channel_today">Events Today</string>
+
+    <!-- Shortcuts -->
+    <string name="shortcut_add_event">Add Event</string>
+    <string name="shortcut_add_event_long">Create a new countdown event</string>
+    <string name="shortcut_upcoming">Upcoming Events</string>
+    <string name="shortcut_upcoming_long">View upcoming events</string>
+
+    <!-- Accessibility -->
+    <string name="content_desc_event_card">Event card for %1$s</string>
+    <string name="content_desc_countdown">Countdown showing %1$s</string>
+    <string name="content_desc_widget">Widget for %1$s event</string>
+    <string name="content_desc_add_event">Add new event</string>
+    <string name="content_desc_edit_event">Edit event</string>
+    <string name="content_desc_delete_event">Delete event</string>
+    <string name="content_desc_share_event">Share event</string>
+    <string name="content_desc_pin_event">Pin event to top</string>
+
+    <!-- Error Messages -->
+    <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="error_network">Network error. Please check your connection.</string>
+    <string name="error_database">Failed to save. Please try again.</string>
+    <string name="error_permission_denied">Permission denied. Please grant access in settings.</string>
+
+    <!-- Success Messages -->
+    <string name="success_event_created">Event created successfully</string>
+    <string name="success_event_updated">Event updated successfully</string>
+    <string name="success_event_deleted">Event deleted</string>
+    <string name="success_backup_exported">Backup exported successfully</string>
+    <string name="success_backup_imported">Events imported successfully</string>
 </resources>

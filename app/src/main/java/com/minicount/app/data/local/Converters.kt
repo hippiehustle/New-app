@@ -1,9 +1,7 @@
 package com.minicount.app.data.local
 
 import androidx.room.TypeConverter
-import com.minicount.app.data.local.entity.EventCategory
-import com.minicount.app.data.local.entity.RepeatInterval
-import com.minicount.app.data.local.entity.WidgetStyle
+import com.minicount.app.data.local.entity.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -49,5 +47,15 @@ class Converters {
     @TypeConverter
     fun toWidgetStyle(value: String): WidgetStyle {
         return WidgetStyle.valueOf(value)
+    }
+
+    @TypeConverter
+    fun fromWidgetTapAction(value: WidgetTapAction): String {
+        return value.name
+    }
+
+    @TypeConverter
+    fun toWidgetTapAction(value: String): WidgetTapAction {
+        return WidgetTapAction.valueOf(value)
     }
 }
