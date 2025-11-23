@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MiniCount</string>
+
+    <!-- Widget -->
+    <string name="widget_name">MiniCount Widget</string>
+    <string name="widget_name_small">MiniCount Small</string>
+    <string name="widget_name_large">MiniCount Large</string>
+    <string name="widget_description">Display your countdown on home screen</string>
+    <string name="widget_description_small">Compact countdown widget</string>
+    <string name="widget_description_large">Detailed countdown widget</string>
+
+    <!-- Premium -->
+    <string name="premium_title">Upgrade to Premium</string>
+    <string name="premium_price">$1.99</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_reminders">Event Reminders</string>
+    <string name="notification_channel_today">Events Today</string>
+</resources>
