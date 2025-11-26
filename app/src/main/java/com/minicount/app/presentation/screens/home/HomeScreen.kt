@@ -34,6 +34,8 @@ fun HomeScreen(
     onPremiumClick: () -> Unit,
     onSettingsClick: () -> Unit = {},
     onStatisticsClick: () -> Unit = {},
+    onCalendarClick: () -> Unit = {},
+    onHistoryClick: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val events by viewModel.events.collectAsState()

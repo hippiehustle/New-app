@@ -14,6 +14,9 @@ import com.minicount.app.presentation.screens.premium.PremiumScreen
 import com.minicount.app.presentation.screens.settings.SettingsScreen
 import com.minicount.app.presentation.screens.statistics.StatisticsScreen
 import com.minicount.app.presentation.screens.onboarding.OnboardingScreen
+import com.minicount.app.presentation.screens.calendar.CalendarScreen
+import com.minicount.app.presentation.screens.history.EventHistoryScreen
+import com.minicount.app.presentation.screens.widget.WidgetPreviewScreen
 
 sealed class Screen(val route: String) {
     object Onboarding : Screen("onboarding")
@@ -25,6 +28,14 @@ sealed class Screen(val route: String) {
     object Premium : Screen("premium")
     object Settings : Screen("settings")
     object Statistics : Screen("statistics")
+    object Calendar : Screen("calendar")
+    object EventHistory : Screen("event_history")
+    object EventHistoryForEvent : Screen("event_history/{eventId}") {
+        fun createRoute(eventId: Long) = "event_history/$eventId"
+    }
+    object WidgetPreview : Screen("widget_preview/{eventId}") {
+        fun createRoute(eventId: Long) = "widget_preview/$eventId"
+    }
 }
 
 @Composable
@@ -56,7 +67,9 @@ fun MiniCountNavigation(
                 },
                 onPremiumClick = { navController.navigate(Screen.Premium.route) },
                 onSettingsClick = { navController.navigate(Screen.Settings.route) },
-                onStatisticsClick = { navController.navigate(Screen.Statistics.route) }
+                onStatisticsClick = { navController.navigate(Screen.Statistics.route) },
+                onCalendarClick = { navController.navigate(Screen.Calendar.route) },
+                onHistoryClick = { navController.navigate(Screen.EventHistory.route) }
             )
         }
 
@@ -94,6 +107,43 @@ fun MiniCountNavigation(
         composable(Screen.Statistics.route) {
             StatisticsScreen(
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Calendar.route) {
+            CalendarScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onEventClick = { eventId ->
+                    navController.navigate(Screen.EditEvent.createRoute(eventId))
+                }
+            )
+        }
+
+        composable(Screen.EventHistory.route) {
+            EventHistoryScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.EventHistoryForEvent.route,
+            arguments = listOf(navArgument("eventId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val eventId = backStackEntry.arguments?.getLong("eventId") ?: return@composable
+            EventHistoryScreen(
+                onNavigateBack = { navController.popBackStack() },
+                eventId = eventId
+            )
+        }
+
+        composable(
+            route = Screen.WidgetPreview.route,
+            arguments = listOf(navArgument("eventId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val eventId = backStackEntry.arguments?.getLong("eventId") ?: return@composable
+            WidgetPreviewScreen(
+                onNavigateBack = { navController.popBackStack() },
+                eventId = eventId
             )
         }
     }
