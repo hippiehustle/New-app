@@ -12,9 +12,10 @@ import com.minicount.app.data.local.entity.*
         EventPhoto::class,
         EventReminder::class,
         EventTemplate::class,
-        WidgetConfig::class
+        WidgetConfig::class,
+        EventHistory::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -24,4 +25,5 @@ abstract class MiniCountDatabase : RoomDatabase() {
     abstract fun eventReminderDao(): EventReminderDao
     abstract fun eventTemplateDao(): EventTemplateDao
     abstract fun widgetConfigDao(): WidgetConfigDao
+    abstract fun eventHistoryDao(): EventHistoryDao
 }

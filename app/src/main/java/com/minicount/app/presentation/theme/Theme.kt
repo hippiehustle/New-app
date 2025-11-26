@@ -63,18 +63,39 @@ private val DarkColorScheme = darkColorScheme(
     outline = md_theme_dark_outline,
 )
 
+/**
+ * Enhanced theme with OLED black mode support
+ */
 @Composable
 fun MiniCountTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
+    useOledBlack: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (darkTheme) {
+                val dynamicScheme = dynamicDarkColorScheme(context)
+                if (useOledBlack) {
+                    dynamicScheme.copy(
+                        background = androidx.compose.ui.graphics.Color.Black,
+                        surface = androidx.compose.ui.graphics.Color.Black,
+                        surfaceVariant = androidx.compose.ui.graphics.Color(0xFF1A1A1A)
+                    )
+                } else dynamicScheme
+            } else dynamicLightColorScheme(context)
         }
-        darkTheme -> DarkColorScheme
+        darkTheme -> {
+            if (useOledBlack) {
+                DarkColorScheme.copy(
+                    background = androidx.compose.ui.graphics.Color.Black,
+                    surface = androidx.compose.ui.graphics.Color.Black,
+                    surfaceVariant = androidx.compose.ui.graphics.Color(0xFF1A1A1A)
+                )
+            } else DarkColorScheme
+        }
         else -> LightColorScheme
     }
 

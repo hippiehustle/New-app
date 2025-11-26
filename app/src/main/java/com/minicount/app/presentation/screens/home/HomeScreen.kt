@@ -32,6 +32,8 @@ fun HomeScreen(
     onAddEventClick: () -> Unit,
     onEditEventClick: (Long) -> Unit,
     onPremiumClick: () -> Unit,
+    onSettingsClick: () -> Unit = {},
+    onStatisticsClick: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val events by viewModel.events.collectAsState()
@@ -44,6 +46,12 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text("MiniCount", fontWeight = FontWeight.Bold) },
                 actions = {
+                    IconButton(onClick = onStatisticsClick) {
+                        Icon(Icons.Default.BarChart, contentDescription = "Statistics")
+                    }
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    }
                     if (!isPremium) {
                         FilledTonalButton(
                             onClick = onPremiumClick,

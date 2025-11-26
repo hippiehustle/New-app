@@ -71,6 +71,23 @@ object AppModule {
         }
     }
 
+    private val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // Add event history table
+            database.execSQL("""
+                CREATE TABLE IF NOT EXISTS event_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    eventId INTEGER NOT NULL,
+                    eventTitle TEXT NOT NULL,
+                    eventCategory TEXT NOT NULL,
+                    occurredDate INTEGER NOT NULL,
+                    recordedAt INTEGER NOT NULL,
+                    notes TEXT NOT NULL DEFAULT ''
+                )
+            """)
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): MiniCountDatabase {
@@ -79,7 +96,7 @@ object AppModule {
             MiniCountDatabase::class.java,
             "minicount_db"
         )
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .fallbackToDestructiveMigration() // For development only
             .build()
     }
@@ -107,5 +124,10 @@ object AppModule {
     @Provides
     fun provideWidgetConfigDao(database: MiniCountDatabase): WidgetConfigDao {
         return database.widgetConfigDao()
+    }
+
+    @Provides
+    fun provideEventHistoryDao(database: MiniCountDatabase): EventHistoryDao {
+        return database.eventHistoryDao()
     }
 }
