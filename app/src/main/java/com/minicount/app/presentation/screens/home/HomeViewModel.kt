@@ -25,9 +25,21 @@ class HomeViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "HomeViewModel"
+        private const val PAGE_SIZE = 20
     }
 
-    // UI State for events list
+    // Pagination state
+    private val _paginationEnabled = MutableStateFlow(false)
+    val paginationEnabled: StateFlow<Boolean> = _paginationEnabled.asStateFlow()
+
+    private val _currentOffset = MutableStateFlow(0)
+    private val _hasMorePages = MutableStateFlow(true)
+    val hasMorePages: StateFlow<Boolean> = _hasMorePages.asStateFlow()
+
+    private val _loadingMore = MutableStateFlow(false)
+    val loadingMore: StateFlow<Boolean> = _loadingMore.asStateFlow()
+
+    // UI State for events list (non-paginated by default for backward compatibility)
     val eventsState: StateFlow<UiState<List<Event>>> = eventRepository.getAllEvents()
         .map { events ->
             if (events.isEmpty()) {
@@ -38,6 +50,26 @@ class HomeViewModel @Inject constructor(
         }
         .catch { e ->
             Log.e(TAG, "Error loading events", e)
+            emit(UiState.Error("Failed to load events: ${e.message}", e))
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            UiState.Loading
+        )
+
+    // Paginated events list
+    private val _paginatedEvents = MutableStateFlow<List<Event>>(emptyList())
+    val paginatedEventsState: StateFlow<UiState<List<Event>>> = _paginatedEvents
+        .map { events ->
+            if (events.isEmpty()) {
+                UiState.Empty("No events yet. Tap + to create your first event!")
+            } else {
+                UiState.Success(events)
+            }
+        }
+        .catch { e ->
+            Log.e(TAG, "Error with paginated events", e)
             emit(UiState.Error("Failed to load events: ${e.message}", e))
         }
         .stateIn(
@@ -152,5 +184,85 @@ class HomeViewModel @Inject constructor(
 
     fun clearUpdateState() {
         _updateState.value = ActionState.Idle
+    }
+
+    /**
+     * Enable pagination mode - useful for large event lists
+     * Call this early (e.g., in onCreate) to start with paginated loading
+     */
+    fun enablePagination() {
+        if (!_paginationEnabled.value) {
+            _paginationEnabled.value = true
+            _currentOffset.value = 0
+            _hasMorePages.value = true
+            _paginatedEvents.value = emptyList()
+            loadInitialPage()
+            Log.d(TAG, "Pagination enabled with page size: $PAGE_SIZE")
+        }
+    }
+
+    /**
+     * Load initial page of events
+     */
+    private fun loadInitialPage() {
+        viewModelScope.launch {
+            try {
+                val events = eventRepository.getEventsPaginatedSync(PAGE_SIZE, 0)
+                _paginatedEvents.value = events
+                _currentOffset.value = PAGE_SIZE
+                _hasMorePages.value = events.size >= PAGE_SIZE
+                Log.d(TAG, "Initial page loaded: ${events.size} events")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to load initial page", e)
+                _paginatedEvents.value = emptyList()
+                _hasMorePages.value = false
+            }
+        }
+    }
+
+    /**
+     * Load next page of events with error handling
+     */
+    fun loadMoreEvents() {
+        if (!_paginationEnabled.value || !_hasMorePages.value || _loadingMore.value) {
+            Log.d(TAG, "Load more skipped - enabled: ${_paginationEnabled.value}, hasMore: ${_hasMorePages.value}, loading: ${_loadingMore.value}")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                _loadingMore.value = true
+                val currentOffset = _currentOffset.value
+                val newEvents = eventRepository.getEventsPaginatedSync(PAGE_SIZE, currentOffset)
+
+                if (newEvents.isEmpty()) {
+                    _hasMorePages.value = false
+                    Log.d(TAG, "No more events to load")
+                } else {
+                    _paginatedEvents.value = _paginatedEvents.value + newEvents
+                    _currentOffset.value = currentOffset + newEvents.size
+                    _hasMorePages.value = newEvents.size >= PAGE_SIZE
+                    Log.d(TAG, "Loaded ${newEvents.size} more events, total: ${_paginatedEvents.value.size}")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to load more events", e)
+                _hasMorePages.value = false
+            } finally {
+                _loadingMore.value = false
+            }
+        }
+    }
+
+    /**
+     * Reset pagination and reload from start
+     */
+    fun resetPagination() {
+        if (_paginationEnabled.value) {
+            _currentOffset.value = 0
+            _hasMorePages.value = true
+            _paginatedEvents.value = emptyList()
+            loadInitialPage()
+            Log.d(TAG, "Pagination reset")
+        }
     }
 }

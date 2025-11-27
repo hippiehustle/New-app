@@ -4,7 +4,15 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
-@Entity(tableName = "events")
+@Entity(
+    tableName = "events",
+    indices = [
+        androidx.room.Index(value = ["targetDate"]),  // For sorting by date
+        androidx.room.Index(value = ["category"]),    // For filtering by category
+        androidx.room.Index(value = ["isPinned"]),    // For pinned events query
+        androidx.room.Index(value = ["targetDate", "isPinned"])  // For composite queries
+    ]
+)
 data class Event(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,

@@ -10,6 +10,12 @@ interface EventDao {
     @Query("SELECT * FROM events ORDER BY isPinned DESC, targetDate ASC")
     fun getAllEvents(): Flow<List<Event>>
 
+    @Query("SELECT * FROM events ORDER BY isPinned DESC, targetDate ASC LIMIT :limit OFFSET :offset")
+    fun getEventsPaginated(limit: Int, offset: Int): Flow<List<Event>>
+
+    @Query("SELECT * FROM events ORDER BY isPinned DESC, targetDate ASC LIMIT :limit OFFSET :offset")
+    suspend fun getEventsPaginatedSync(limit: Int, offset: Int): List<Event>
+
     @Query("SELECT * FROM events WHERE id = :eventId")
     fun getEventById(eventId: Long): Flow<Event?>
 

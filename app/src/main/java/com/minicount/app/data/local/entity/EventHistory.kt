@@ -7,7 +7,14 @@ import java.time.LocalDateTime
 /**
  * Tracks when events occur or pass, useful for repeating events and statistics
  */
-@Entity(tableName = "event_history")
+@Entity(
+    tableName = "event_history",
+    indices = [
+        androidx.room.Index(value = ["eventId"]),  // For querying history by event
+        androidx.room.Index(value = ["occurredDate"]),  // For date range queries
+        androidx.room.Index(value = ["recordedAt"])  // For recent history queries
+    ]
+)
 data class EventHistory(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,

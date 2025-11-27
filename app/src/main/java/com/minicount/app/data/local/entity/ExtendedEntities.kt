@@ -3,7 +3,13 @@ package com.minicount.app.data.local.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "event_photos")
+@Entity(
+    tableName = "event_photos",
+    indices = [
+        androidx.room.Index(value = ["eventId"]),  // For querying photos by event
+        androidx.room.Index(value = ["isPrimary"])  // For finding primary photo quickly
+    ]
+)
 data class EventPhoto(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -13,7 +19,13 @@ data class EventPhoto(
     val order: Int = 0
 )
 
-@Entity(tableName = "event_reminders")
+@Entity(
+    tableName = "event_reminders",
+    indices = [
+        androidx.room.Index(value = ["eventId"]),  // For querying reminders by event
+        androidx.room.Index(value = ["isEnabled"])  // For filtering enabled reminders
+    ]
+)
 data class EventReminder(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -39,7 +51,12 @@ data class EventTemplate(
     val defaultReminderDays: Int = 1
 )
 
-@Entity(tableName = "widget_config")
+@Entity(
+    tableName = "widget_config",
+    indices = [
+        androidx.room.Index(value = ["eventId"])  // For querying widgets by event
+    ]
+)
 data class WidgetConfig(
     @PrimaryKey
     val widgetId: Int,
