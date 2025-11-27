@@ -7,6 +7,7 @@ import android.os.Build
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.google.android.gms.ads.MobileAds
+import com.minicount.app.domain.notifications.NotificationSyncWorker
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -24,6 +25,9 @@ class MiniCountApplication : Application(), Configuration.Provider {
 
         // Create notification channels
         createNotificationChannels()
+
+        // Schedule periodic notification sync (daily)
+        NotificationSyncWorker.schedulePeriodic(this)
     }
 
     override val workManagerConfiguration: Configuration

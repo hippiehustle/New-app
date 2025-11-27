@@ -5,6 +5,7 @@ import androidx.work.*
 import com.minicount.app.data.local.entity.Event
 import com.minicount.app.data.local.entity.EventReminder
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.first
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
@@ -136,29 +137,94 @@ class NotificationScheduler @Inject constructor(
 /**
  * Worker for event reminder notifications
  */
-class EventNotificationWorker(
-    context: Context,
-    params: WorkerParameters
+@androidx.hilt.work.HiltWorker
+class EventNotificationWorker @dagger.assisted.AssistedInject constructor(
+    @dagger.assisted.Assisted context: Context,
+    @dagger.assisted.Assisted params: WorkerParameters,
+    private val eventRepository: com.minicount.app.data.repository.EventRepository,
+    private val notificationHandler: NotificationHandler
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        // This will be implemented with actual notification sending logic
-        // For now, it's a placeholder
-        return Result.success()
+        return try {
+            val eventId = inputData.getLong("eventId", -1L)
+            val daysUntil = inputData.getInt("daysUntil", 0)
+
+            if (eventId == -1L) {
+                android.util.Log.e("EventNotificationWorker", "Invalid event ID")
+                return Result.failure()
+            }
+
+            // Fetch the event
+            val event = eventRepository.getEventById(eventId).first()
+            if (event == null) {
+                android.util.Log.e("EventNotificationWorker", "Event not found: $eventId")
+                return Result.failure()
+            }
+
+            // Check if event is still in the future
+            if (event.targetDate.isAfter(LocalDateTime.now())) {
+                notificationHandler.sendEventReminder(event, daysUntil)
+                Result.success()
+            } else {
+                android.util.Log.d("EventNotificationWorker", "Event has passed: $eventId")
+                Result.success()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("EventNotificationWorker", "Failed to send notification", e)
+            Result.retry()
+        }
     }
 }
 
 /**
  * Worker for event occurred notifications
  */
-class EventOccurredWorker(
-    context: Context,
-    params: WorkerParameters
+@androidx.hilt.work.HiltWorker
+class EventOccurredWorker @dagger.assisted.AssistedInject constructor(
+    @dagger.assisted.Assisted context: Context,
+    @dagger.assisted.Assisted params: WorkerParameters,
+    private val eventRepository: com.minicount.app.data.repository.EventRepository,
+    private val notificationHandler: NotificationHandler
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        // This will be implemented with actual notification sending logic
-        // For now, it's a placeholder
-        return Result.success()
+        return try {
+            val eventId = inputData.getLong("eventId", -1L)
+
+            if (eventId == -1L) {
+                android.util.Log.e("EventOccurredWorker", "Invalid event ID")
+                return Result.failure()
+            }
+
+            // Fetch the event
+            val event = eventRepository.getEventById(eventId).first()
+            if (event == null) {
+                android.util.Log.e("EventOccurredWorker", "Event not found: $eventId")
+                return Result.failure()
+            }
+
+            // Send notification
+            notificationHandler.sendEventOccurred(event)
+
+            // If event is repeating, schedule next occurrence
+            if (event.isRepeating && event.repeatInterval != com.minicount.app.data.local.entity.RepeatInterval.NONE) {
+                val nextDate = com.minicount.app.domain.util.CountdownCalculator.getNextOccurrence(
+                    event.targetDate,
+                    event.repeatInterval
+                )
+
+                // Update event with next occurrence
+                val updatedEvent = event.copy(targetDate = nextDate)
+                eventRepository.updateEvent(updatedEvent)
+
+                android.util.Log.d("EventOccurredWorker", "Updated repeating event to next occurrence: $nextDate")
+            }
+
+            Result.success()
+        } catch (e: Exception) {
+            android.util.Log.e("EventOccurredWorker", "Failed to send occurrence notification", e)
+            Result.retry()
+        }
     }
 }

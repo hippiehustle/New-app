@@ -30,11 +30,26 @@ interface EventPhotoDao {
 
 @Dao
 interface EventReminderDao {
-    @Query("SELECT * FROM event_reminders WHERE eventId = :eventId ORDER BY daysBefore DESC")
+    @Query("SELECT * FROM event_reminders WHERE eventId = :eventId ORDER BY daysBefore ASC")
     fun getRemindersForEvent(eventId: Long): Flow<List<EventReminder>>
+
+    @Query("SELECT * FROM event_reminders WHERE eventId = :eventId ORDER BY daysBefore ASC")
+    suspend fun getRemindersForEventSync(eventId: Long): List<EventReminder>
+
+    @Query("SELECT * FROM event_reminders WHERE id = :reminderId")
+    fun getReminderById(reminderId: Long): Flow<EventReminder?>
+
+    @Query("SELECT * FROM event_reminders WHERE isEnabled = 1")
+    suspend fun getEnabledReminders(): List<EventReminder>
+
+    @Query("SELECT * FROM event_reminders WHERE isEnabled = 1")
+    suspend fun getAllEnabledReminders(): List<EventReminder>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertReminder(reminder: EventReminder): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertReminders(reminders: List<EventReminder>)
 
     @Update
     suspend fun updateReminder(reminder: EventReminder)
@@ -42,11 +57,14 @@ interface EventReminderDao {
     @Delete
     suspend fun deleteReminder(reminder: EventReminder)
 
+    @Query("DELETE FROM event_reminders WHERE id = :reminderId")
+    suspend fun deleteReminderById(reminderId: Long)
+
     @Query("DELETE FROM event_reminders WHERE eventId = :eventId")
     suspend fun deleteRemindersForEvent(eventId: Long)
 
-    @Query("SELECT * FROM event_reminders WHERE isEnabled = 1")
-    suspend fun getEnabledReminders(): List<EventReminder>
+    @Query("SELECT COUNT(*) FROM event_reminders WHERE eventId = :eventId")
+    fun getReminderCountForEvent(eventId: Long): Flow<Int>
 }
 
 @Dao

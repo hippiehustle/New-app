@@ -17,7 +17,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    private val MIGRATION_1_2 = object : Migration(1, 2) {
+    internal val MIGRATION_1_2 = object : Migration(1, 2) {
         override fun migrate(database: SupportSQLiteDatabase) {
             // Create new tables for enhanced features
             database.execSQL("""
@@ -71,7 +71,7 @@ object AppModule {
         }
     }
 
-    private val MIGRATION_2_3 = object : Migration(2, 3) {
+    internal val MIGRATION_2_3 = object : Migration(2, 3) {
         override fun migrate(database: SupportSQLiteDatabase) {
             // Add event history table
             database.execSQL("""
@@ -88,7 +88,7 @@ object AppModule {
         }
     }
 
-    private val MIGRATION_3_4 = object : Migration(3, 4) {
+    internal val MIGRATION_3_4 = object : Migration(3, 4) {
         override fun migrate(database: SupportSQLiteDatabase) {
             // Rename description column to notes in events table
             // SQLite doesn't support RENAME COLUMN directly in older versions
@@ -134,13 +134,7 @@ object AppModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): MiniCountDatabase {
-        return Room.databaseBuilder(
-            context,
-            MiniCountDatabase::class.java,
-            "minicount_db"
-        )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
-            .build()
+        return com.minicount.app.data.local.DatabaseProvider.getDatabase(context)
     }
 
     @Provides

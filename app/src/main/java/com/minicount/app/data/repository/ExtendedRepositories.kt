@@ -41,8 +41,23 @@ class EventReminderRepository @Inject constructor(
     fun getRemindersForEvent(eventId: Long): Flow<List<EventReminder>> =
         eventReminderDao.getRemindersForEvent(eventId)
 
+    suspend fun getRemindersForEventSync(eventId: Long): List<EventReminder> =
+        eventReminderDao.getRemindersForEventSync(eventId)
+
+    fun getReminderById(reminderId: Long): Flow<EventReminder?> =
+        eventReminderDao.getReminderById(reminderId)
+
+    suspend fun getEnabledReminders(): List<EventReminder> =
+        eventReminderDao.getEnabledReminders()
+
+    suspend fun getAllEnabledReminders(): List<EventReminder> =
+        eventReminderDao.getAllEnabledReminders()
+
     suspend fun insertReminder(reminder: EventReminder): Long =
         eventReminderDao.insertReminder(reminder)
+
+    suspend fun insertReminders(reminders: List<EventReminder>) =
+        eventReminderDao.insertReminders(reminders)
 
     suspend fun updateReminder(reminder: EventReminder) =
         eventReminderDao.updateReminder(reminder)
@@ -50,11 +65,14 @@ class EventReminderRepository @Inject constructor(
     suspend fun deleteReminder(reminder: EventReminder) =
         eventReminderDao.deleteReminder(reminder)
 
+    suspend fun deleteReminderById(reminderId: Long) =
+        eventReminderDao.deleteReminderById(reminderId)
+
     suspend fun deleteRemindersForEvent(eventId: Long) =
         eventReminderDao.deleteRemindersForEvent(eventId)
 
-    suspend fun getEnabledReminders(): List<EventReminder> =
-        eventReminderDao.getEnabledReminders()
+    fun getReminderCountForEvent(eventId: Long): Flow<Int> =
+        eventReminderDao.getReminderCountForEvent(eventId)
 }
 
 @Singleton

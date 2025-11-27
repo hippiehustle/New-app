@@ -29,9 +29,7 @@ import java.io.InputStream
 class CountdownWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val database = MiniCountDatabase::class.java.let {
-            androidx.room.Room.databaseBuilder(context, it, "minicount_db").build()
-        }
+        val database = com.minicount.app.data.local.DatabaseProvider.getDatabase(context)
         val repository = EventRepository(database.eventDao())
 
         provideContent {
@@ -63,9 +61,7 @@ class CountdownWidget : GlanceAppWidget() {
 
 class CountdownWidgetSmall : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val database = MiniCountDatabase::class.java.let {
-            androidx.room.Room.databaseBuilder(context, it, "minicount_db").build()
-        }
+        val database = com.minicount.app.data.local.DatabaseProvider.getDatabase(context)
         val repository = EventRepository(database.eventDao())
 
         provideContent {
@@ -93,9 +89,7 @@ class CountdownWidgetSmall : GlanceAppWidget() {
 
 class CountdownWidgetLarge : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val database = MiniCountDatabase::class.java.let {
-            androidx.room.Room.databaseBuilder(context, it, "minicount_db").build()
-        }
+        val database = com.minicount.app.data.local.DatabaseProvider.getDatabase(context)
         val repository = EventRepository(database.eventDao())
 
         provideContent {
