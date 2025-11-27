@@ -88,6 +88,49 @@ object AppModule {
         }
     }
 
+    private val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // Rename description column to notes in events table
+            // SQLite doesn't support RENAME COLUMN directly in older versions
+            // So we create new table, copy data, and replace
+            database.execSQL("""
+                CREATE TABLE events_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    title TEXT NOT NULL,
+                    notes TEXT NOT NULL DEFAULT '',
+                    targetDate INTEGER NOT NULL,
+                    category TEXT NOT NULL DEFAULT 'OTHER',
+                    photoUri TEXT,
+                    isRepeating INTEGER NOT NULL DEFAULT 0,
+                    repeatInterval TEXT NOT NULL DEFAULT 'NONE',
+                    notificationEnabled INTEGER NOT NULL DEFAULT 1,
+                    notificationDaysBefore INTEGER NOT NULL DEFAULT 1,
+                    createdAt INTEGER NOT NULL,
+                    color INTEGER NOT NULL DEFAULT -10177041,
+                    widgetStyle TEXT NOT NULL DEFAULT 'CLASSIC',
+                    isPinned INTEGER NOT NULL DEFAULT 0
+                )
+            """)
+
+            // Copy data from old table to new (map description to notes)
+            database.execSQL("""
+                INSERT INTO events_new (id, title, notes, targetDate, category, photoUri,
+                    isRepeating, repeatInterval, notificationEnabled, notificationDaysBefore,
+                    createdAt, color, widgetStyle, isPinned)
+                SELECT id, title, COALESCE(description, ''), targetDate, category, photoUri,
+                    isRepeating, repeatInterval, notificationEnabled, notificationDaysBefore,
+                    createdAt, color, widgetStyle, isPinned
+                FROM events
+            """)
+
+            // Drop old table
+            database.execSQL("DROP TABLE events")
+
+            // Rename new table
+            database.execSQL("ALTER TABLE events_new RENAME TO events")
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): MiniCountDatabase {
@@ -96,8 +139,7 @@ object AppModule {
             MiniCountDatabase::class.java,
             "minicount_db"
         )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
-            .fallbackToDestructiveMigration() // For development only
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
             .build()
     }
 
