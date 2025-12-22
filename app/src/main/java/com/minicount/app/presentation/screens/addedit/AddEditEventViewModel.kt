@@ -12,6 +12,8 @@ import com.minicount.app.data.local.entity.EventCategory
 import com.minicount.app.data.local.entity.RepeatInterval
 import com.minicount.app.data.local.entity.WidgetStyle
 import com.minicount.app.data.repository.EventRepository
+import com.minicount.app.domain.templates.EventTemplate
+import com.minicount.app.domain.templates.EventTemplates
 import com.minicount.app.presentation.common.ActionState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -221,6 +223,55 @@ class AddEditEventViewModel @Inject constructor(
      */
     fun clearSaveState() {
         _saveState.value = ActionState.Idle
+    }
+
+    // Template Functions
+
+    /**
+     * Get all available templates
+     */
+    fun getAvailableTemplates(): List<EventTemplate> {
+        return EventTemplates.ALL_TEMPLATES
+    }
+
+    /**
+     * Apply a template to the current event
+     */
+    fun applyTemplate(template: EventTemplate) {
+        val state = _uiState.value
+        _uiState.value = state.copy(
+            category = template.category,
+            isRepeating = template.repeatInterval != RepeatInterval.NONE,
+            repeatInterval = template.repeatInterval,
+            notificationDaysBefore = template.notificationDaysBefore,
+            color = Color(template.color)
+        )
+        Log.d(TAG, "Template applied: ${template.name}")
+    }
+
+    /**
+     * Create event from template with all fields pre-filled
+     */
+    fun createFromTemplate(template: EventTemplate) {
+        if (_uiState.value.isEditMode) {
+            Log.w(TAG, "Cannot apply template in edit mode")
+            return
+        }
+
+        _uiState.value = AddEditEventUiState(
+            title = "",
+            description = template.description,
+            targetDate = LocalDateTime.now().plusDays(7),
+            category = template.category,
+            isRepeating = template.repeatInterval != RepeatInterval.NONE,
+            repeatInterval = template.repeatInterval,
+            notificationEnabled = true,
+            notificationDaysBefore = template.notificationDaysBefore,
+            color = Color(template.color),
+            widgetStyle = WidgetStyle.CLASSIC,
+            isEditMode = false
+        )
+        Log.d(TAG, "Event created from template: ${template.name}")
     }
 }
 

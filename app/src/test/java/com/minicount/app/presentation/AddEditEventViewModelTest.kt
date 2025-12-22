@@ -276,6 +276,165 @@ class AddEditEventViewModelTest {
         assertNull(viewModel.uiState.value.error)
     }
 
+    // Template Integration Tests
+
+    @Test
+    fun `getAvailableTemplates should return all templates`() = runTest {
+        // Given
+        savedStateHandle = SavedStateHandle()
+        viewModel = AddEditEventViewModel(eventRepository, savedStateHandle)
+        advanceUntilIdle()
+
+        // When
+        val templates = viewModel.getAvailableTemplates()
+
+        // Then
+        assertTrue("Should have multiple templates", templates.size >= 8)
+        assertTrue("Should contain birthday template",
+            templates.any { it.name == "Birthday" })
+        assertTrue("Should contain wedding template",
+            templates.any { it.name == "Wedding" })
+    }
+
+    @Test
+    fun `applyTemplate should update uiState with template values`() = runTest {
+        // Given
+        savedStateHandle = SavedStateHandle()
+        viewModel = AddEditEventViewModel(eventRepository, savedStateHandle)
+        advanceUntilIdle()
+
+        val templates = viewModel.getAvailableTemplates()
+        val birthdayTemplate = templates.first { it.name == "Birthday" }
+
+        // When
+        viewModel.applyTemplate(birthdayTemplate)
+        advanceUntilIdle()
+
+        // Then
+        val state = viewModel.uiState.value
+        assertEquals(EventCategory.BIRTHDAY, state.category)
+        assertTrue(state.isRepeating)
+        assertEquals(RepeatInterval.YEARLY, state.repeatInterval)
+        assertEquals(7, state.notificationDaysBefore)
+    }
+
+    @Test
+    fun `applyTemplate should preserve existing title and description`() = runTest {
+        // Given
+        savedStateHandle = SavedStateHandle()
+        viewModel = AddEditEventViewModel(eventRepository, savedStateHandle)
+        advanceUntilIdle()
+
+        viewModel.onTitleChange("My Custom Title")
+        viewModel.onDescriptionChange("My Description")
+        advanceUntilIdle()
+
+        val templates = viewModel.getAvailableTemplates()
+        val weddingTemplate = templates.first { it.name == "Wedding" }
+
+        // When
+        viewModel.applyTemplate(weddingTemplate)
+        advanceUntilIdle()
+
+        // Then
+        val state = viewModel.uiState.value
+        assertEquals("My Custom Title", state.title)
+        assertEquals("My Description", state.description)
+        assertEquals(EventCategory.WEDDING, state.category)
+    }
+
+    @Test
+    fun `createFromTemplate should create new event with template values`() = runTest {
+        // Given
+        savedStateHandle = SavedStateHandle()
+        viewModel = AddEditEventViewModel(eventRepository, savedStateHandle)
+        advanceUntilIdle()
+
+        val templates = viewModel.getAvailableTemplates()
+        val anniversaryTemplate = templates.first { it.name == "Anniversary" }
+
+        // When
+        viewModel.createFromTemplate(anniversaryTemplate)
+        advanceUntilIdle()
+
+        // Then
+        val state = viewModel.uiState.value
+        assertEquals("", state.title) // Title should be empty for user to fill
+        assertEquals(anniversaryTemplate.description, state.description)
+        assertEquals(EventCategory.ANNIVERSARY, state.category)
+        assertTrue(state.isRepeating)
+        assertEquals(RepeatInterval.YEARLY, state.repeatInterval)
+        assertEquals(7, state.notificationDaysBefore)
+        assertFalse(state.isEditMode)
+    }
+
+    @Test
+    fun `createFromTemplate should not work in edit mode`() = runTest {
+        // Given
+        val testEvent = createTestEvent(id = 1, title = "Existing Event")
+        savedStateHandle = SavedStateHandle(mapOf("eventId" to 1L))
+        `when`(eventRepository.getEventByIdSync(1L)).thenReturn(testEvent)
+
+        viewModel = AddEditEventViewModel(eventRepository, savedStateHandle)
+        advanceUntilIdle()
+
+        val originalTitle = viewModel.uiState.value.title
+
+        val templates = viewModel.getAvailableTemplates()
+        val template = templates.first()
+
+        // When
+        viewModel.createFromTemplate(template)
+        advanceUntilIdle()
+
+        // Then - State should remain unchanged
+        assertEquals(originalTitle, viewModel.uiState.value.title)
+        assertTrue(viewModel.uiState.value.isEditMode)
+    }
+
+    @Test
+    fun `applyTemplate with vacation template should set correct properties`() = runTest {
+        // Given
+        savedStateHandle = SavedStateHandle()
+        viewModel = AddEditEventViewModel(eventRepository, savedStateHandle)
+        advanceUntilIdle()
+
+        val templates = viewModel.getAvailableTemplates()
+        val vacationTemplate = templates.first { it.name == "Vacation" }
+
+        // When
+        viewModel.applyTemplate(vacationTemplate)
+        advanceUntilIdle()
+
+        // Then
+        val state = viewModel.uiState.value
+        assertEquals(EventCategory.VACATION, state.category)
+        assertFalse(state.isRepeating)
+        assertEquals(RepeatInterval.NONE, state.repeatInterval)
+        assertEquals(14, state.notificationDaysBefore)
+    }
+
+    @Test
+    fun `applyTemplate with holiday template should set yearly repeat`() = runTest {
+        // Given
+        savedStateHandle = SavedStateHandle()
+        viewModel = AddEditEventViewModel(eventRepository, savedStateHandle)
+        advanceUntilIdle()
+
+        val templates = viewModel.getAvailableTemplates()
+        val holidayTemplate = templates.first { it.name == "Holiday" }
+
+        // When
+        viewModel.applyTemplate(holidayTemplate)
+        advanceUntilIdle()
+
+        // Then
+        val state = viewModel.uiState.value
+        assertEquals(EventCategory.HOLIDAY, state.category)
+        assertTrue(state.isRepeating)
+        assertEquals(RepeatInterval.YEARLY, state.repeatInterval)
+    }
+
     private fun createTestEvent(
         id: Long,
         title: String
